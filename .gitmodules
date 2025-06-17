@@ -1,0 +1,3 @@
+[submodule "3thrd/macros"]
+	path = 3thrd/macros
+	url = git@github.com:dingjingmaster/macros.git
