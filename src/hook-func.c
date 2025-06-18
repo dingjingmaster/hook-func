@@ -232,6 +232,7 @@ HookFunc * hook_func_create(void)
 
 int hook_func_prepare(HookFunc * handle, void ** targetFunc, void * hookFunc)
 {
+    C_RETURN_VAL_IF_FAIL(handle && targetFunc && hookFunc, 0);
     int rv = 0;
     void *origFunc = NULL;
     const HookFuncParams params = { .hookFunc = hookFunc, };
@@ -246,6 +247,8 @@ int hook_func_prepare(HookFunc * handle, void ** targetFunc, void * hookFunc)
 
 int hook_func_prepare_with_params(HookFunc * handle, void ** targetFunc, const HookFuncParams * params)
 {
+    C_RETURN_VAL_IF_FAIL(handle && targetFunc && params, 0);
+
     int rv = 0;
     void* origFunc = NULL;
 
@@ -260,6 +263,7 @@ int hook_func_prepare_with_params(HookFunc * handle, void ** targetFunc, const H
 
 int hook_func_install(HookFunc * handle, int flags)
 {
+    C_RETURN_VAL_IF_FAIL(handle, 0);
     int rv = 0;
 
     C_LOG_DEBUG("Enter hook_func_install(%p, 0x%x)", handle, flags);
@@ -271,6 +275,8 @@ int hook_func_install(HookFunc * handle, int flags)
 
 int hook_func_uninstall(HookFunc * handle, int flags)
 {
+    C_RETURN_VAL_IF_FAIL(handle, 0);
+
     int rv = 0;
 
     C_LOG_DEBUG("Enter hook_func_uninstall(%p, 0x%x)", handle, flags);
@@ -282,6 +288,8 @@ int hook_func_uninstall(HookFunc * handle, int flags)
 
 int hook_func_destroy(HookFunc ** handle)
 {
+    C_RETURN_VAL_IF_FAIL(handle && *handle, 0);
+
     int rv = 0;
 
     C_LOG_DEBUG("Enter funchook_destroy(%p)", handle);
