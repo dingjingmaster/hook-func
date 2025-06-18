@@ -8,7 +8,7 @@ set(PROJECT_VERSION "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}.${PROJECT
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-undefined")
-set(ENV{PKG_CONFIG_PATH} "/usr/local/lib64/pkgconfig:/usr/lib64/pkgconfig:$ENV{PKG_CONFIG_PATH}")
+set(ENV{PKG_CONFIG_PATH} "/usr/local/lib/pkgconfig:/usr/local/lib64/pkgconfig:/usr/lib64/pkgconfig:$ENV{PKG_CONFIG_PATH}")
 
 
 if (NOT CMAKE_BUILD_TYPE)
@@ -32,6 +32,8 @@ elseif (APPLE)
 else ()
     message(FATAL_ERROR "Not supported system.")
 endif ()
+
+add_definitions(-D _GNU_SOURCE)
 
 if (CMAKE_SIZEOF_VOID_P EQUAL 8)
     message(STATUS "64bit")
