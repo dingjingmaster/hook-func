@@ -15,8 +15,11 @@ int add(int a, int b)
     return a + b;
 }
 
+Add t = add;
+
 int hook_add(int a, int b)
 {
+    printf("true: %d -- ", t(a, b));
     return -1;
 }
 
@@ -32,7 +35,6 @@ void* thread_handle(void* data)
 
 int main (int argc, char* argv[])
 {
-    Add t = add;
     pthread_t threadID;
 
     pthread_create(&threadID, NULL, thread_handle, NULL);
