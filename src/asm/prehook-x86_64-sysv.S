@@ -13,15 +13,16 @@
 	.type	hook_func_hook_caller_asm, @function
 #endif
 hook_func_hook_caller_asm:
-	.cfi_startproc
-	.byte 0xf3, 0x0f, 0x1e, 0xfa // same with `endbr64`, which is `nop` on legacy machines
+	.cfi_startproc                      // 生成调试信息，标记函数开始，生成与函数调用栈帧相关的调试信息
+	.byte 0xf3, 0x0f, 0x1e, 0xfa        // same with `endbr64`, which is `nop` on legacy machines
 	pushq  %rbp
-	.cfi_def_cfa_offset 0x10
+	.cfi_def_cfa_offset 0x10            // 栈帧初始化后，用于定义初始CFA
 	.cfi_offset rbp, -0x10
 	movq   %rsp, %rbp
 	.cfi_def_cfa_register rbp
 	sub    $0xc0, %rsp
 	// save integer or pointer arguments passed in registers.
+	// 将函数参数从寄存器保存到栈上
 	mov    %rdi, -0xc0(%rbp)
 	mov    %rsi, -0xb8(%rbp)
 	mov    %rdx, -0xb0(%rbp)
@@ -29,8 +30,10 @@ hook_func_hook_caller_asm:
 	mov    %r8, -0xa0(%rbp)
 	mov    %r9, -0x98(%rbp)
 	// save number of floating point arguments when the callee is a variadic function.
+	// 当被调方是可变参数时候，保存浮点数参数的数量
 	mov    %rax, -0x90(%rbp)
 	// save static chain pointer just in case even though C/C++ doesn't use it.
+	// 静态链表指针
 	mov    %r10, -0x88(%rbp)
 	// save floating-point registers used as arguments.
 	movdqu %xmm0, -0x80(%rbp)

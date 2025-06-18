@@ -57,8 +57,8 @@ C_SYMBOL_EXPORT HookFunc*       hook_func_create                (void);
 /**
  * @brief 准备Hook函数，但不执行安装。该函数分析目标函数，设置Hook
  * @param handle
- * @param targetFunc
- * @param hookFunc
+ * @param targetFunc 要Hook的函数
+ * @param hookFunc Hook 函数
  * @return 成功返回0,失败返回错误码
  */
 C_SYMBOL_EXPORT int             hook_func_prepare               (HookFunc* handle, void** targetFunc, void* hookFunc);

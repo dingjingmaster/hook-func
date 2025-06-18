@@ -42,7 +42,8 @@ static int hook_func_write_relative_2g_jump(HookFunc* funcHook, const uint8_t* s
 {
     out[0] = 0xe9;
     *(int*)(out + 1) = (int)(dst - (src + 5));
-    C_LOG_DEBUG("  Write relative +/-2G jump 0x%X -> 0x%X\n", (size_t) src, (size_t) dst);
+    C_LOG_DEBUG("Write relative +/-2G jump 0x%X -> 0x%X", (size_t) src, (size_t) dst);
+
     return 0;
 }
 
@@ -105,6 +106,7 @@ int hook_func_make_trampoline(HookFunc* funcHook, IpDisplacement* disp, const ui
     C_RETURN_VAL_IF_FAIL(0 == rv, rv);
 
     C_LOG_WRITE_FILE(C_LOG_LEVEL_DEBUG, "Original Instructions:");
+    // 或取一条汇编指令，保存到 insn 指针
     while ((rv = hook_func_disasm_next(&disAsm, &insn)) == 0) {
         RipRelative relDisp;
         RipRelative relImm;
@@ -119,19 +121,19 @@ int hook_func_make_trampoline(HookFunc* funcHook, IpDisplacement* disp, const ui
             }
         }
         else {
-            size_t insn_size = HOOK_FUNC_INSN_SIZE(insn);
-            memcpy(ctx.dst, ctx.src, insn_size);
+            const size_t insnSize = HOOK_FUNC_INSN_SIZE(insn);
+            memcpy(ctx.dst, ctx.src, insnSize);
             hook_func_disasm_x86_rip_relative(&disAsm, insn, &relDisp, &relImm);
-            rv = handle_rip_relative(&ctx, &relDisp, insn_size);
+            rv = handle_rip_relative(&ctx, &relDisp, insnSize);
             if (rv != 0) {
                 goto cleanup;
             }
-            rv = handle_rip_relative(&ctx, &relImm, insn_size);
+            rv = handle_rip_relative(&ctx, &relImm, insnSize);
             if (rv != 0) {
                 goto cleanup;
             }
-            ctx.src += insn_size;
-            ctx.dst += insn_size;
+            ctx.src += insnSize;
+            ctx.dst += insnSize;
         }
 
         if (ctx.src - func >= REL2G_JUMP_SIZE) {
@@ -153,6 +155,7 @@ int hook_func_make_trampoline(HookFunc* funcHook, IpDisplacement* disp, const ui
             break;
         }
     }
+
     if (rv != HOOK_FUNC_ERROR_END_OF_INSTRUCTION) {
         goto cleanup;
     }
@@ -313,7 +316,8 @@ static int handle_rip_relative(MakeTrampolineContext* ctx, const RipRelative* re
         ctx->ripDisp->disp[1].dstAddr = rel->addr;
         ctx->ripDisp->disp[1].srcAddrOffset = (size_t) (ctx->dst - ctx->dstBase) + insnSize;
         ctx->ripDisp->disp[1].posOffset = (ctx->dst - ctx->dstBase) + rel->offset;
-    } else if (rel->size != 0) {
+    }
+    else if (rel->size != 0) {
         hook_func_set_error_message(ctx->funcHook, "Could not fix ip-relative address. The size is not 32.");
         return HOOK_FUNC_ERROR_CANNOT_FIX_IP_RELATIVE;
     }

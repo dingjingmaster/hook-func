@@ -43,17 +43,17 @@ struct _HookMemState
  */
 struct _HookFuncEntry
 {
-    Insn                                transit[TRANSIT_CODE_SIZE];
-    void*                               origTargetFunc;
-    void*                               targetFunc;
-    void*                               hookFunc;
+    Insn                                transit[TRANSIT_CODE_SIZE];         // origTargetFunc 中被替换的函数代码
+    void*                               origTargetFunc;                     // 指向被Hook函数的指针
+    void*                               targetFunc;                         // 解析函数地址
+    void*                               hookFunc;                           // Hook 函数
     HookFuncHook                        preHook;
     void*                               userData;
     uint32_t                            flags;
     uint32_t                            patchCodeSize;
     Insn                                trampoline[TRAMPOLINE_SIZE];
-    Insn                                oldCode[MAX_PATCH_CODE_SIZE];
-    Insn                                newCode[MAX_PATCH_CODE_SIZE];
+    Insn                                oldCode[MAX_PATCH_CODE_SIZE];       // 原始函数代码
+    Insn                                newCode[MAX_PATCH_CODE_SIZE];       // Hook后补丁代码
 };
 
 /**
@@ -65,9 +65,9 @@ struct _HookFuncPage
     HookFuncEntry                       entries[1];
 #endif
     struct _HookFuncPage*               next;
-    uint16_t                            used;
+    uint16_t                            used;               // 使用 entries 数量
 #ifndef HOOK_FUNC_ENTRY_AT_PAGE_BOUNDARY
-    HookFuncEntry                       entries[1];
+    HookFuncEntry                       entries[1];         // Hook入口
 #endif
 };
 

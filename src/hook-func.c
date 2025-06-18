@@ -193,8 +193,7 @@ static int get_free_address(HookFunc* funchook, void *funcAddr, void *addrs[2])
                     /* unused memory region after func_addr. */
                     addrs[1] = (void*)prevEnd;
                 }
-                C_LOG_DEBUG("  -- Use address %p or %p for function %p",
-                             addrs[0], addrs[1], funcAddr);
+                C_LOG_DEBUG("Use address %p or %p for function %p", addrs[0], addrs[1], funcAddr);
                 memory_map_close(&mm);
                 return 0;
             }
@@ -235,12 +234,13 @@ int hook_func_prepare(HookFunc * handle, void ** targetFunc, void * hookFunc)
 {
     int rv = 0;
     void *origFunc = NULL;
-    HookFuncParams params = { .hookFunc = hookFunc, };
+    const HookFuncParams params = { .hookFunc = hookFunc, };
 
     C_LOG_DEBUG("Enter hook_func_prepare(%p, %p, %p)", handle, targetFunc, hookFunc);
     origFunc = *targetFunc;
     rv = hook_func_prepare_internal(handle, targetFunc, &params);
     C_LOG_DEBUG("Leave hook_func_prepare(..., [%p->%p],...) => %d", origFunc, *targetFunc, rv);
+
     return rv;
 }
 
@@ -325,13 +325,17 @@ void* hook_func_hook_caller (size_t transitAddr, const size_t* basePointer)
     return entry->hookFunc ? entry->hookFunc : entry->trampoline;
 }
 
+/**
+ * @brief 向上取整，分配 HookFunc 整数倍的内存
+ * @return
+ */
 HookFunc* hook_func_alloc (void)
 {
     if (gPageSize == 0) {
         gPageSize = sysconf(_SC_PAGE_SIZE);
         C_LOG_DEBUG("page size = %d", gPageSize);
     }
-    size_t size = C_ROUND_UP(gHookFuncSize, gPageSize);
+    const size_t size = C_ROUND_UP(gHookFuncSize, gPageSize);
     void *mem = mmap(NULL, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
     if (mem == (void*) -1) {
         return NULL;
@@ -373,7 +377,7 @@ int hook_func_page_alloc (HookFunc* funcHook, HookFuncPage** pageOut, uint8_t* f
             }
             *pageOut = mmap(addrs[i], gPageSize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
             if (SAFE_JUMP_DISTANCE(func, *pageOut) || SAFE_JUMP_DISTANCE(*pageOut, func)) {
-                C_LOG_DEBUG("  allocate page %p (size=%%X)", *pageOut, gPageSize);
+                C_LOG_DEBUG("allocate page %p (size=%X)", *pageOut, gPageSize);
                 return 0;
             }
             if (*pageOut == MAP_FAILED) {
@@ -381,7 +385,7 @@ int hook_func_page_alloc (HookFunc* funcHook, HookFuncPage** pageOut, uint8_t* f
                 hook_func_set_error_message(funcHook, "mmap failed(addr=%p): %s", addrs[i], hook_func_strerror(errno, errbuf, sizeof(errbuf)));
                 return HOOK_FUNC_ERROR_MEMORY_ALLOCATION;
             }
-            C_LOG_DEBUG("  try to allocate %p but %p (size=%%X)", addrs[i], *pageOut, gPageSize);
+            C_LOG_DEBUG("try to allocate %p but %p (size=%%X)", addrs[i], *pageOut, gPageSize);
             munmap(*pageOut, gPageSize);
         }
     }
@@ -406,7 +410,7 @@ int hook_func_page_free (HookFunc* funcHook, HookFuncPage* page)
     int rv = munmap(page, gPageSize);
 
     if (rv == 0) {
-        C_LOG_DEBUG(" deallocate page %p (size=%X)", page, gPageSize);
+        C_LOG_DEBUG("Deallocate page %p (size=%X)", page, gPageSize);
         return 0;
     }
     hook_func_set_error_message(funcHook, "Failed to deallocate page %p (size=%X, error=%s)",
@@ -418,15 +422,15 @@ int hook_func_page_free (HookFunc* funcHook, HookFuncPage* page)
 int hook_func_page_protect (HookFunc* funcHook, HookFuncPage* page)
 {
     char errBuf[128] = {0};
-    int rv = mprotect(page, gPageSize, PROT_READ | PROT_EXEC);
-
+    const int rv = mprotect(page, gPageSize, PROT_READ | PROT_EXEC);
     if (rv == 0) {
         C_LOG_DEBUG("protect page %p (size=%X)", page, gPageSize);
         return 0;
     }
+    C_LOG_WARNING("Failed to protect page %p (size=%X, error=%s)",
+        page, gPageSize, hook_func_strerror(errno, errBuf, sizeof(errBuf)));
     hook_func_set_error_message(funcHook, "Failed to protect page %p (size=%X, error=%s)",
-                               page, gPageSize,
-                               hook_func_strerror(errno, errBuf, sizeof(errBuf)));
+        page, gPageSize, hook_func_strerror(errno, errBuf, sizeof(errBuf)));
     return HOOK_FUNC_ERROR_MEMORY_FUNCTION;
 }
 
@@ -435,7 +439,7 @@ int hook_func_page_unprotect (HookFunc* funcHook, HookFuncPage* page)
     char errBuf[128] = {0};
     int rv = mprotect(page, gPageSize, PROT_READ | PROT_WRITE);
     if (rv == 0) {
-        C_LOG_DEBUG("  unprotect page %p (size=%X)", page, gPageSize);
+        C_LOG_DEBUG("unprotect page %p (size=%X)", page, gPageSize);
         return 0;
     }
     hook_func_set_error_message(funcHook, "Failed to unprotect page %p (size=%X, error=%s)",
@@ -485,14 +489,16 @@ int hook_func_unprotect_begin(HookFunc * funcHook, HookMemState* state, void* st
 int hook_func_unprotect_end(HookFunc * funcHook, const HookMemState * state)
 {
     char errBuf[128] = {0};
-    int rv = mprotect(state->addr, state->size, PROT_READ | PROT_EXEC);
+    const int rv = mprotect(state->addr, state->size, PROT_READ | PROT_EXEC);
     if (rv == 0) {
         C_LOG_DEBUG("protect memory %p (size=%X, prot=read,exec)", state->addr, state->size);
         return 0;
     }
+    C_LOG_WARNING("Failed to protect memory %p (size=%X, prot=read,exec, error=%s)",
+        state->addr, state->size, hook_func_strerror(errno, errBuf, sizeof(errBuf)));
     hook_func_set_error_message(funcHook, "Failed to protect memory %p (size=%X, prot=read,exec, error=%s)",
-                               state->addr, state->size,
-                               hook_func_strerror(errno, errBuf, sizeof(errBuf)));
+        state->addr, state->size, hook_func_strerror(errno, errBuf, sizeof(errBuf)));
+
     return HOOK_FUNC_ERROR_MEMORY_FUNCTION;
 }
 
@@ -574,6 +580,7 @@ void* hook_func_resolve_func(HookFunc * funcHook, void * func)
         symtab++;
     }
 #endif
+
     return func;
 }
 
@@ -583,11 +590,12 @@ static HookFunc* hook_func_create_internal (void)
     if (hf == NULL) {
         return NULL;
     }
+
     if (gNumEntriesInPage == 0) {
 #ifdef HOOK_FUNC_ENTRY_AT_PAGE_BOUNDARY
         gNumEntriesInPage = 1;
 #else
-        gNumEntriesInPage = (gPageSize - offsetof(HookFuncPage, entries)) / sizeof(HookFuncEntry);
+        gNumEntriesInPage = (gPageSize - offsetof(HookFuncPage, entries)) / sizeof(HookFuncEntry);      // 28
 #endif
         C_LOG_DEBUG("\n  page_size=%X\n  num_entries_in_page=%X", gPageSize, gNumEntriesInPage);
     }
@@ -611,19 +619,22 @@ const char* hook_func_strerror(int errNum, char *buf, size_t bufLen)
 
 static int hook_func_prepare_internal(HookFunc* funcHook, void** targetFunc, const HookFuncParams* params)
 {
-    void *func = *targetFunc;
-    Insn trampoline[TRAMPOLINE_SIZE];
-    size_t trampolineSize;
+    int rv = 0;
     IpDisplacement disp;
+    size_t trampolineSize;
+    void *func = *targetFunc;               // 要Hook的函数
     HookFuncPage* page = NULL;
     HookFuncEntry* entry = NULL;
-    int rv = 0;
+    Insn trampoline[TRAMPOLINE_SIZE];
 
     if (funcHook->installed) {
+        C_LOG_DEBUG("Hook function already installed!");
         hook_func_set_error_message(funcHook, "Could not modify already-installed hook func handle.");
         return HOOK_FUNC_ERROR_ALREADY_INSTALLED;
     }
-    func = hook_func_resolve_func(funcHook, func);
+    C_LOG_DEBUG("target func: %lX", func);
+    func = hook_func_resolve_func(funcHook, func);      // 解决 LD_PRELOAD 中替换的函数
+    C_LOG_DEBUG("resolved target func: %lX", func);
     rv = hook_func_make_trampoline(funcHook, &disp, func, trampoline, &trampolineSize);
     if (rv != 0) {
         C_LOG_DEBUG("failed to make trampoline");
@@ -704,14 +715,13 @@ static void hook_func_log_trampoline(HookFunc* funcHook, const Insn* trampoline,
     HookFuncDisAsm disAsm;
     const HookFuncInsn* insn;
 
-    C_LOG_WRITE_FILE(C_LOG_LEVEL_DEBUG, "  Trampoline Instructions:");
+    C_LOG_WRITE_FILE(C_LOG_LEVEL_DEBUG, "Trampoline Instructions:");
     if (hook_func_disasm_init(&disAsm, funcHook, trampoline, trampolineSize, (size_t)trampoline) != 0) {
         int i;
-        C_LOG_WRITE_FILE(C_LOG_LEVEL_DEBUG, "  Failed to decode trampoline\n    ");
+        C_LOG_WRITE_FILE(C_LOG_LEVEL_DEBUG, "  Failed to decode trampoline");
         for (i = 0; i < TRAMPOLINE_SIZE; i++) {
             C_LOG_WRITE_FILE(C_LOG_LEVEL_DEBUG, " %02x", trampoline[i]);
         }
-        C_LOG_WRITE_FILE(C_LOG_LEVEL_DEBUG, "\n");
         return;
     }
     while (hook_func_disasm_next(&disAsm, &insn) == 0) {
@@ -749,8 +759,8 @@ static int hook_func_install_internal(HookFunc* funcHook, int flags)
         }
 
         for (i = 0; i < page->used; i++) {
-            HookFuncEntry* entry = &page->entries[i];
-            size_t patchCodeByteSize = entry->patchCodeSize * sizeof(Insn);
+            const HookFuncEntry* entry = &page->entries[i];
+            const size_t patchCodeByteSize = entry->patchCodeSize * sizeof(Insn);
             HookMemState state;
             int rv1 = hook_func_unprotect_begin(funcHook, &state, entry->targetFunc, patchCodeByteSize);
             if (rv1 != 0) {
@@ -775,7 +785,23 @@ static int hook_func_install_internal(HookFunc* funcHook, int flags)
         }
     }
     funcHook->installed = 1;
-    C_LOG_INFO("");
+
+    {
+        C_LOG_WRITE_FILE(C_LOG_LEVEL_DEBUG, "Finally Instructions:");
+        for (page = funcHook->pageList; page != NULL; page = page->next) {
+            for (int i = 0; i < page->used; i++) {
+                HookFuncDisAsm disAsm;
+                const HookFuncInsn* insn;
+                const HookFuncEntry* entry = &page->entries[i];
+                if (0 == hook_func_disasm_init(&disAsm, funcHook, entry->origTargetFunc, MAX_INSN_CHECK_SIZE, (size_t)entry->origTargetFunc)) {
+                    while (hook_func_disasm_next(&disAsm, &insn) == 0) {
+                        hook_func_disasm_log_instruction(&disAsm, insn);
+                    }
+                }
+                hook_func_disasm_cleanup(&disAsm);
+            }
+        }
+    }
 
     return 0;
 }

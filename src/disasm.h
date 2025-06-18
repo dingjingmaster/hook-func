@@ -36,8 +36,8 @@ struct _HookFuncDisAsm
 #if defined(ARCH_X86) || defined(ARCH_X86_64)
 typedef struct
 {
-    Insn*                           addr;
-    intptr_t                        rAddr;
+    Insn*                           addr;           // 反汇编中，指令要跳转到的地址
+    intptr_t                        rAddr;          // 反汇编中，指令要跳转到的相对地址
     int                             offset;
     int                             size;
 } RipRelative;

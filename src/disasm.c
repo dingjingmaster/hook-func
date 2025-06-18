@@ -105,6 +105,7 @@ void hook_func_disasm_log_instruction(HookFuncDisAsm* disAsm, const HookFuncInsn
     C_LOG_WRITE_FILE(C_LOG_LEVEL_DEBUG, "  %x (%02d) %-24s %s%s%s",
         (size_t)insn->address, insn->size, hex, insn->mnemonic, insn->op_str[0] ? " " : "", insn->op_str);
 
+#if 0
     cs_detail *detail = insn->detail;
     if (detail == NULL) {
         return;
@@ -146,7 +147,8 @@ void hook_func_disasm_log_instruction(HookFuncDisAsm* disAsm, const HookFuncInsn
         if (x86->disp >= 0) {
             i64 = x86->disp;
             sign = "";
-        } else {
+        }
+        else {
             i64 = -x86->disp;
             sign = "-";
         }
@@ -197,6 +199,7 @@ void hook_func_disasm_log_instruction(HookFuncDisAsm* disAsm, const HookFuncInsn
         }
     }
 #endif /* defined(ARCH_X86_64) || defined(ARCH_X86) */
+#endif
 }
 
 #if defined(ARCH_ARM64)
@@ -298,8 +301,11 @@ void hook_func_disasm_x86_rip_relative(HookFuncDisAsm* disAsm, const HookFuncIns
     memset(relDisp, 0, sizeof(RipRelative));
     memset(relImm, 0, sizeof(RipRelative));
 
+    // 如果指令的立即数(如果存在)在cs_insn.bytes数组中的起始位置。
+    // 通过此值可以从指令的原始字节中提取立即数的值
     if (x86->encoding.imm_offset != 0) {
         for (i = 0; i < insn->detail->groups_count; i++) {
+            // 相对跳转指令分组
             if (insn->detail->groups[i] == X86_GRP_BRANCH_RELATIVE) {
                 intptr_t imm = 0;
                 if (x86->encoding.imm_size == 4) {
@@ -310,17 +316,24 @@ void hook_func_disasm_x86_rip_relative(HookFuncDisAsm* disAsm, const HookFuncIns
                     // TODO:
                 }
                 // Fix IP-relative jump or call:
+                // cs_insn->size: 表示指令长度，记录指令在内存或二进制中的占用字节数，直接对应cs_insn->bytes数组中有效字节的数量
+                // 反汇编中，size用于确定当前指令的结束位置和下一条指令的起始地址
+                // (next_address = address + size)
                 relImm->addr = (uint8_t*)(size_t)(insn->address + insn->size + imm);
                 relImm->rAddr = imm;
-                relImm->size = x86->encoding.imm_size * 8;
+                relImm->size = x86->encoding.imm_size * 8;      // 指令中立即数的字节长度 * 8, 立即数的位宽
                 relImm->offset = x86->encoding.imm_offset;
                 break;
             }
         }
     }
+
+    // disp_offset，表示x86指令中偏移量在指令字节流(cs_insn->bytes)中的起始偏移量。
     if (x86->encoding.disp_offset != 0) {
         for (i = 0; i < x86->op_count; i++) {
             const cs_x86_op *op = &x86->operands[i];
+            // X86_OP_MEM：内存操作数
+            // RIP：表示指令指针寄存器
             if (op->type == X86_OP_MEM && op->mem.base == X86_REG_RIP) {
                 // Fix IP-relative addressing such as:
                 //    mov eax, dword ptr [rip + 0x236eda]
