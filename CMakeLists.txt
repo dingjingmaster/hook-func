@@ -10,6 +10,8 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-undefined")
 set(ENV{PKG_CONFIG_PATH} "/usr/local/lib/pkgconfig:/usr/local/lib64/pkgconfig:/usr/lib64/pkgconfig:$ENV{PKG_CONFIG_PATH}")
 
+include_directories(${CMAKE_SOURCE_DIR}/3thrd/capstone/include)
+include_directories(${CMAKE_SOURCE_DIR}/3thrd/capstone/include/capstone)
 
 if (NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build." FORCE)
@@ -69,10 +71,11 @@ endif ()
 
 
 find_package(PkgConfig)
-pkg_check_modules(CAPS capstone REQUIRED)
+#pkg_check_modules(CAPS capstone REQUIRED)
 
 include_directories(${CMAKE_SOURCE_DIR}/3thrd)
 
+add_subdirectory(3thrd/capstone)
 
 add_subdirectory(src)
 add_subdirectory(examples)

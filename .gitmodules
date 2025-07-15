@@ -1,3 +1,6 @@
 [submodule "3thrd/macros"]
 	path = 3thrd/macros
 	url = git@github.com:dingjingmaster/macros.git
+[submodule "3thrd/capstone"]
+	path = 3thrd/capstone
+	url = git@github.com:dingjingmaster/capstone.git
