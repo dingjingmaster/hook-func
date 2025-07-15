@@ -15,6 +15,7 @@ target_compile_definitions(hook-func PUBLIC
         -D C_LOG_TAG="hook-func"
         -D C_LOG_DIR="/tmp/hook-func.log"
 )
+set_target_properties(hook-func PROPERTIES LINKER_LANGUAGE C)
 
 add_library(hook-func-shared SHARED
         $<TARGET_OBJECTS:capstone>
@@ -29,8 +30,8 @@ add_library(hook-func-shared SHARED
 )
 target_compile_options(hook-func-shared PUBLIC -fPIC)
 target_link_libraries(hook-func-shared PUBLIC -pthread -ldl)
-#target_include_directories(hook-func-shared PUBLIC )
 target_compile_definitions(hook-func-shared PUBLIC
         -D C_LOG_TAG="hook-func"
         -D C_LOG_DIR="/tmp/hook-func.log"
 )
+set_target_properties(hook-func-shared PROPERTIES LINKER_LANGUAGE C)
