@@ -11,8 +11,8 @@
 #include <stdint.h>
 #include <string.h>
 #include <limits.h>
-#include <c/log.h>
 
+#include "log.h"
 #include "disasm.h"
 #include "hook-func.h"
 #include "hook-func-internal.h"

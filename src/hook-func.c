@@ -8,9 +8,11 @@
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
-#include <c/clib.h>
 #include <sys/mman.h>
 #include <linux/limits.h>
+
+#include "log.h"
+
 #ifdef PLATFORM_LINUX
 #include <elf.h>
 #include <link.h>

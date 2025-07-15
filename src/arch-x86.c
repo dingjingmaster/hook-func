@@ -6,11 +6,11 @@
 
 #if defined(ARCH_X86_64) || defined(ARCH_X86)
 #include <stdio.h>
-#include <c/clib.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
 
+#include "log.h"
 #include "disasm.h"
 #include "hook-func-internal.h"
 

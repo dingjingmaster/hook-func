@@ -70,7 +70,6 @@ endif ()
 
 find_package(PkgConfig)
 pkg_check_modules(CAPS capstone REQUIRED)
-pkg_check_modules(CLIB clibrary-c-static REQUIRED)
 
 include_directories(${CMAKE_SOURCE_DIR}/3thrd)
 

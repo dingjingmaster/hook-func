@@ -7,8 +7,8 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
-#include <c/clib.h>
 
+#include "log.h"
 #include "hook-func-internal.h"
 
 #ifdef ARCH_ARM64
