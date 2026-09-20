@@ -1,15 +1,15 @@
 #if defined ARCH_ARM64
 #if defined __APPLE__
-#define funchook_hook_caller_asm _funchook_hook_caller_asm
-#define funchook_hook_caller _funchook_hook_caller
+#define hook_func_hook_caller_asm _hook_func_hook_caller_asm
+#define hook_func_hook_caller _hook_func_hook_caller
 #endif
 	.arch armv8-a
 	.text
-	.globl	funchook_hook_caller_asm
+	.globl	hook_func_hook_caller_asm
 #if defined __linux__
-	.type	funchook_hook_caller_asm, %function
+	.type	hook_func_hook_caller_asm, %function
 #endif
-funchook_hook_caller_asm:
+hook_func_hook_caller_asm:
 	.cfi_startproc
 	// save frame pointer (x29) and link register (x30).
 	stp x29, x30, [sp, -0xe0]!
@@ -52,8 +52,8 @@ funchook_hook_caller_asm:
 	mov x0, x10
 	// 2nd arg: frame pointer
 	mov x1, x29
-	// call funchook_hook_caller
-	bl  funchook_hook_caller
+	// call hook_func_hook_caller
+	bl  hook_func_hook_caller
 	mov x9, x0
 	// restore registers
 	ldp x0, x1, [sp, 0x10]
@@ -90,4 +90,7 @@ funchook_hook_caller_asm:
 	// jump to hook_func
 	br x9
 	.cfi_endproc
+#if !defined __APPLE__
+	.size hook_func_hook_caller_asm, .-hook_func_hook_caller_asm
+#endif
 #endif

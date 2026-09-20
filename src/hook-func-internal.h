@@ -95,7 +95,7 @@ int         hook_func_make_trampoline       (HookFunc* funcHook, IpDisplacement*
 #ifdef ARCH_X86_64
 int         hook_func_page_avail            (HookFunc* funcHook, HookFuncPage* page, int idx, uint8_t* addr, IpDisplacement* disp);
 #else
-#define     hook_func_page_avail            (funcHook, page, idx, addr, disp) (1)
+#define     hook_func_page_avail(funcHook, page, idx, addr, disp) (1)
 #endif
 
 
